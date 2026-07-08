@@ -13,6 +13,7 @@ from .schemas import (
     provider_booking_list_schema,
 )
 from .serializers import BookingSerializer
+from .tasks import booking_notification
 
 
 class BookingCreateAPIView(APIView):
@@ -31,10 +32,21 @@ class BookingCreateAPIView(APIView):
             )
 
         serializer = self.serializer_class(
-            data=request.data, context={"request": request}
+            data=request.data,
+            context={"request": request},
         )
+
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+
+        # Save booking
+        booking = serializer.save()
+
+        # Execute Celery task
+        booking_notification.delay(
+            customer_name=booking.customer.user.username,
+            provider_name=booking.provider.user.username,
+            service_name=booking.service.name,
+        )
 
         return Response(
             {
@@ -44,7 +56,6 @@ class BookingCreateAPIView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
-
 
 class CustomerBookingListAPIView(APIView):
     serializer_class = BookingSerializer

@@ -2,6 +2,7 @@
 Django settings for service_provider2 project.
 """
 
+from apps.bookings import models
 from pathlib import Path
 import environ
 from datetime import timedelta
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     # Third Party Apps
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
@@ -55,6 +57,7 @@ INSTALLED_APPS = [
     "apps.provider",
     "apps.services",
     "apps.bookings",
+    "apps.chat",
 ]
 
 
@@ -92,6 +95,8 @@ TEMPLATES = [
         },
     },
 ]
+
+ASGI_APPLICATION = "service_core.asgi.application"
 
 WSGI_APPLICATION = "service_core.wsgi.application"
 
@@ -156,6 +161,20 @@ MEDIA_ROOT = BASE_DIR / "media"
 AUTH_USER_MODEL = "user.User"
 
 # ------------------------------------------------------------------------------
+# CHANNEL LAYERS (Redis)
+# ------------------------------------------------------------------------------
+
+CHANNEL_LAYERS = {
+    "default": {
+        # Development: no Redis required.
+        # For production, switch to channels_redis.core.RedisChannelLayer:
+        # "BACKEND": "channels_redis.core.RedisChannelLayer",
+        # "CONFIG": {"hosts": [("127.0.0.1", 6379)]},
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
+
+# ------------------------------------------------------------------------------
 # DJANGO REST FRAMEWORK
 # ------------------------------------------------------------------------------
 
@@ -186,7 +205,7 @@ SPECTACULAR_SETTINGS = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 
     "ROTATE_REFRESH_TOKENS": True,
@@ -194,3 +213,30 @@ SIMPLE_JWT = {
 
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+
+# ------------------------------------------------------------------------------
+# CELERY SETTINGS
+# ------------------------------------------------------------------------------
+
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+
+CELERY_ACCEPT_CONTENT = ["json"]
+
+CELERY_TASK_SERIALIZER = "json"
+
+CELERY_RESULT_SERIALIZER = "json"
+
+CELERY_TIMEZONE = "UTC"
+
+#EMAIL CONFIGURATION
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST =env('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD =env('EMAIL_HOST_PASSWORD')   # NOT your Gmail password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

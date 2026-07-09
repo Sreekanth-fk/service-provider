@@ -1,8 +1,9 @@
 from django.conf import settings
 from django.db import models
+from service_core.models import BaseModel
 
 
-class Booking(models.Model):
+class Booking(BaseModel):
     STATUS_CHOICES = (
         ("PENDING", "Pending"),
         ("ACCEPTED", "Accepted"),
@@ -31,6 +32,9 @@ class Booking(models.Model):
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="PENDING"
     )
+
+    # created_at = models.DateTimeField(default=timezone.now)
+    # updated_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"{self.customer} - {self.service} ({self.status})"

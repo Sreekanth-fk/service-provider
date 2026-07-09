@@ -5,6 +5,8 @@ from .serializers import (
     CustomerProviderSerializer,
     CustomerServiceSerializer,
     CustomerBookingSerializer,
+    CrontabScheduleUpdateSerializer,
+    PeriodicTaskTimeResponseSerializer,
 )
 
 customer_profile_schema = extend_schema(
@@ -48,4 +50,12 @@ customer_booking_list_schema = extend_schema(
     summary="List Customer Bookings",
     description="Retrieve a list of all bookings created by the authenticated customer.",
     responses={200: CustomerBookingSerializer(many=True)},
+)
+
+admin_periodic_task_time_update_schema = extend_schema(
+    tags=["Admin - Periodic Tasks"],
+    summary="Update Good Morning Email Schedule",
+    description="Update the cron schedule (minute, hour, day, etc.) for the daily Good Morning email task. Admin only access.",
+    request=CrontabScheduleUpdateSerializer,
+    responses={200: PeriodicTaskTimeResponseSerializer},
 )

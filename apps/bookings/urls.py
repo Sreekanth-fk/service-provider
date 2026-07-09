@@ -12,8 +12,5 @@ urlpatterns = [
     path("my-bookings/", CustomerBookingListAPIView.as_view()),
     # Provider APIs
     path("provider-bookings/", ProviderBookingListAPIView.as_view()),
-    path(
-        "provider-bookings/<int:pk>/action/",
-        ProviderBookingActionAPIView.as_view(),
-    ),
+    path("provider-bookings/<int:pk>/action/", ProviderBookingActionAPIView.as_view(),),
 ]

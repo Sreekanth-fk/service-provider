@@ -1,7 +1,8 @@
 from django.db import models
+from service_core.models import BaseModel
 
 
-class Service(models.Model):
+class Service(BaseModel):
 
     name = models.CharField(
         max_length=255

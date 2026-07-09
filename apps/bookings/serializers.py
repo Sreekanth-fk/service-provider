@@ -4,6 +4,7 @@ from rest_framework import serializers
 from apps.provider.models import Provider
 from apps.services.models import Service
 from apps.services.serializers import ServiceSerializer
+from service_core.helpers.timezone import LocalizedDateField
 from .models import Booking
 
 User = get_user_model()
@@ -18,7 +19,7 @@ class BookingActionSerializer(serializers.Serializer):
 class BookingUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "username", "email", "role")
+        fields = ("id", "username", "email", "role", "timezone")
 
 
 class ProviderNestedSerializer(serializers.ModelSerializer):
@@ -33,6 +34,7 @@ class BookingSerializer(serializers.ModelSerializer):
     customer = BookingUserSerializer(read_only=True)
     provider = ProviderNestedSerializer(read_only=True)
     service = ServiceSerializer(read_only=True)
+    date = LocalizedDateField(format="%d-%m-%Y")
 
     provider_id = serializers.PrimaryKeyRelatedField(
         queryset=Provider.objects.all(), source="provider", write_only=True

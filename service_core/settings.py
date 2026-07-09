@@ -2,10 +2,10 @@
 Django settings for service_provider2 project.
 """
 
-from apps.bookings import models
 from pathlib import Path
 import environ
 from datetime import timedelta
+
 # ------------------------------------------------------------------------------
 # BASE DIRECTORY
 # ------------------------------------------------------------------------------
@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
+    "django_celery_beat",
 
     # Local Apps
     "apps.user",
@@ -71,6 +72,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "service_core.middleware.ThreadLocalUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -231,9 +233,12 @@ CELERY_RESULT_SERIALIZER = "json"
 
 CELERY_TIMEZONE = "UTC"
 
+# CELERY BEAT SCHEDULER (database-backed, editable via Django Admin)
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
 #EMAIL CONFIGURATION
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST =env('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 

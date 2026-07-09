@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from apps.services.models import Service
 from apps.services.serializers import ServiceSerializer
+from service_core.helpers.timezone import LocalizedDateTimeField
 from .models import Provider
 
 User = get_user_model()
@@ -10,8 +11,14 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "username", "email", "role")
+        fields = ("id", "username", "email", "role", "timezone")
         read_only_fields = ("id", "role")
+
+    def validate_timezone(self, value):
+        import pytz
+        if value not in pytz.all_timezones_set:
+            raise serializers.ValidationError("Invalid timezone.")
+        return value
 
 
 class ProviderSerializer(serializers.ModelSerializer):
@@ -23,6 +30,14 @@ class ProviderSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
         allow_null=True,
+    )
+    created_at = LocalizedDateTimeField(
+        format="%d-%m-%Y %I:%M %p",
+        read_only=True,
+    )
+    updated_at = LocalizedDateTimeField(
+        format="%d-%m-%Y %I:%M %p",
+        read_only=True,
     )
 
     class Meta:
@@ -37,8 +52,10 @@ class ProviderSerializer(serializers.ModelSerializer):
             "details",
             "document",
             "is_approved",
+            "created_at",
+            "updated_at",
         ]
-        read_only_fields = ["id", "is_approved"]
+        read_only_fields = ["id", "is_approved", "created_at", "updated_at"]
 
     def validate_phone(self, value):
         import re

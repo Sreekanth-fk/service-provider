@@ -1,9 +1,12 @@
 from rest_framework import serializers
+from service_core.helpers.timezone import LocalizedDateTimeField
 
 from .models import Service
 
 
 class ServiceSerializer(serializers.ModelSerializer):
+    created_at = LocalizedDateTimeField(format="%d-%m-%Y %I:%M %p", read_only=True)
+    updated_at = LocalizedDateTimeField(format="%d-%m-%Y %I:%M %p", read_only=True)
 
     class Meta:
         model = Service

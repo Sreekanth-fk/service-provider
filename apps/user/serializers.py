@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
+import pytz
+from service_core.helpers.timezone import LocalizedDateTimeField
 
 from apps.customer.models import Customer
 from apps.provider.models import Provider
@@ -115,6 +117,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "email",
+            "timezone",
             "role",
             "password",
             "confirm_password",
@@ -123,6 +126,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
         read_only_fields = ("id",)
+
+    def validate_timezone(self, value):
+        if value not in pytz.all_timezones_set:
+            raise serializers.ValidationError("Invalid timezone.")
+        return value
 
     def validate_email(self, value):
 
@@ -229,10 +237,19 @@ class LoginSerializer(serializers.Serializer):
                 "username": user.username,
                 "email": user.email,
                 "role": user.role,
+                "timezone": user.timezone,
             }
         }
         
 class ProfileSerializer(serializers.ModelSerializer):
+    created_at = LocalizedDateTimeField(
+        format="%d-%m-%Y %I:%M %p",
+        read_only=True,
+    )
+    updated_at = LocalizedDateTimeField(
+        format="%d-%m-%Y %I:%M %p",
+        read_only=True,
+    )
 
     class Meta:
         model = User
@@ -241,6 +258,9 @@ class ProfileSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "role",
+            "timezone",
+            "created_at",
+            "updated_at",
         )
 
 
@@ -251,7 +271,13 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
         fields = (
             "username",
             "email",
+            "timezone",
         )
+
+    def validate_timezone(self, value):
+        if value not in pytz.all_timezones_set:
+            raise serializers.ValidationError("Invalid timezone.")
+        return value
 
     def validate_email(self, value):
 
@@ -287,4 +313,4 @@ class LogoutSerializer(serializers.Serializer):
                 {
                     "refresh": ["Invalid refresh token."]
                 }
-            )       
+            )

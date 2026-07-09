@@ -1,8 +1,9 @@
 from django.conf import settings
 from django.db import models
+from service_core.models import BaseModel
 
 
-class ChatRoom(models.Model):
+class ChatRoom(BaseModel):
     booking = models.OneToOneField(
         "bookings.Booking",
         on_delete=models.CASCADE,
@@ -18,13 +19,13 @@ class ChatRoom(models.Model):
         on_delete=models.CASCADE,
         related_name="chat_rooms_as_provider",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    # created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"ChatRoom: Booking {self.booking_id}"
 
 
-class ChatMessage(models.Model):
+class ChatMessage(BaseModel):
     room = models.ForeignKey(
         ChatRoom,
         on_delete=models.CASCADE,
@@ -37,7 +38,7 @@ class ChatMessage(models.Model):
     )
     message = models.TextField()
     is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    # created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ("created_at",)

@@ -1,10 +1,12 @@
 from rest_framework import serializers
+from service_core.helpers.timezone import LocalizedDateTimeField
 
 from .models import ChatRoom, ChatMessage
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
     booking_id = serializers.IntegerField(read_only=True)
+    created_at = LocalizedDateTimeField(format="%d-%m-%Y %I:%M %p", read_only=True)
 
     class Meta:
         model = ChatRoom
@@ -30,6 +32,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     sender_role = serializers.CharField(
         source="sender.role", read_only=True
     )
+    created_at = LocalizedDateTimeField(format="%d-%m-%Y %I:%M %p", read_only=True)
 
     class Meta:
         model = ChatMessage

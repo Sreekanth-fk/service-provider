@@ -3,17 +3,19 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema
 
 from apps.provider.models import Provider
 from apps.services.models import Service
 from apps.bookings.models import Booking
-
 from .serializers import (
     CustomerProfileSerializer,
     UpdateCustomerProfileSerializer,
     CustomerProviderSerializer,
     CustomerServiceSerializer,
     CustomerBookingSerializer,
+    CrontabScheduleUpdateSerializer,
+    PeriodicTaskTimeResponseSerializer,
 )
 from .schemas import (
     customer_profile_schema,
@@ -22,7 +24,9 @@ from .schemas import (
     provider_detail_schema,
     service_list_schema,
     customer_booking_list_schema,
+    admin_periodic_task_time_update_schema,
 )
+from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 
 class CustomerProfileAPIView(APIView):
@@ -189,33 +193,44 @@ class ServiceListAPIView(APIView):
         )
 
 
-class CustomerBookingListAPIView(APIView):
+class AdminPeriodicTaskTimeUpdateView(APIView):
     """
-    API view to list the customer's own bookings.
+    Admin-only API to update the schedule time of the Good Morning email periodic task.
     """
-    serializer_class = CustomerBookingSerializer
+    serializer_class = CrontabScheduleUpdateSerializer
     permission_classes = (IsAuthenticated,)
 
-    @customer_booking_list_schema
-    def get(self, request):
-        if request.user.role != "customer":
+    @admin_periodic_task_time_update_schema
+    def patch(self, request):
+        # Admin check
+        if not request.user.is_staff:
             return Response(
-                {
-                    "success": False,
-                    "message": "Access denied. Only customers can access this resource.",
-                },
+                {"success": False, "message": "Only admins can update schedule."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        queryset = Booking.objects.filter(customer=request.user)
-        serializer = self.serializer_class(
-            queryset, many=True, context={"request": request}
-        )
+        # Get the specific periodic task
+        task = get_object_or_404(PeriodicTask, name="send-good-morning-emails")
+
+        # Validate input
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        crontab_data = serializer.validated_data
+
+        # Get or create the crontab schedule (reuses existing if identical)
+        crontab, _ = CrontabSchedule.objects.get_or_create(**crontab_data)
+
+        # Update task's crontab
+        task.crontab = crontab
+        task.save(update_fields=["crontab", "date_changed"])
+
+        # Return updated task
+        response_serializer = PeriodicTaskTimeResponseSerializer(task)
         return Response(
             {
                 "success": True,
-                "message": "My bookings fetched successfully.",
-                "data": serializer.data,
+                "message": "Schedule updated successfully.",
+                "data": response_serializer.data,
             },
             status=status.HTTP_200_OK,
         )
